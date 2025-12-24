@@ -1,0 +1,113 @@
+name: Document with Writerside
+
+permissions:
+  contents: write
+  id-token: write
+  pages: write
+
+env:
+  ARTIFACT: 'webHelpDCS2-all.zip' # Name of the artifact to be generated
+  DOCKER_VERSION: '242.21870' # Specific Docker version
+
+on:
+  workflow_call:
+    inputs:
+      instance_id:
+        description: 'The Writerside instance id'
+        required: true
+        type: string
+    secrets:
+      GH_TOKEN:
+        description: 'Automatically generated token that GitHub provides for every workflow run'
+        required: true
+      NPM_TOKEN:
+        description: 'Token used to publish the package on NPM registry'
+        required: false
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' && 
+      github.ref_name == 'main'
+    outputs:
+      writerside_changed: ${{ steps.check.outputs.writerside_changed }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+          clean: true
+
+      - name: Check for Writerside Changes
+        id: check
+        run: |
+          # Determine the base commit SHA for comparison
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE_SHA=$(jq -r .pull_request.base.sha < "$GITHUB_EVENT_PATH")
+          else
+            BASE_SHA=$(git rev-parse HEAD~1)
+          fi
+
+          # List changed files between BASE_SHA and current commit
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA ${{ github.sha }})
+          echo "Changed files: $CHANGED_FILES"
+
+          # Check if any file is within the Writerside directory
+          if echo "$CHANGED_FILES" | grep -q '^Writerside/'; then
+            echo "Writerside directory has changes."
+            echo "writerside_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes in Writerside directory."
+            echo "writerside_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+  document:
+    needs: [check-changes]
+    if: ${{ needs.check-changes.outputs.writerside_changed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        uses: kurocado-studio/platform/.github/actions/install@main
+        with:
+          npm_token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Build docs using Writerside Docker builder
+        uses: JetBrains/writerside-github-action@v4
+        with:
+          instance: 'Writerside/${{ inputs.instance_id }}'
+          artifact: ${{ env.ARTIFACT }}
+          docker-version: ${{ env.DOCKER_VERSION }}
+
+      - name: Save artifact with build results
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: |
+            artifacts/${{ env.ARTIFACT }} 
+            artifacts/report.json
+          retention-days: 7
+
+      - name: Unzip artifact
+        run: |
+          unzip -O UTF-8 -qq artifacts/${{ env.ARTIFACT }} -d dir
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dir
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}

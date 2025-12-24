@@ -1,0 +1,38 @@
+name: Test
+
+on:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+        description: 'Automatically generated token that GitHub provides for every workflow run'
+        required: true
+      NPM_TOKEN:
+        description: 'Token used to install (if applicable) private packages from NPM registry'
+        required: false
+    inputs:
+      monorepo:
+        default: false
+        required: false
+        type: boolean
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+          clean: true
+
+      - name: Install Dependencies
+        uses: kurocado-studio/platform/.github/actions/install@main
+        with:
+          monorepo: ${{ inputs.monorepo }}
+          npm_token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Test
+        uses: kurocado-studio/platform/.github/actions/test@main
+        with:
+          monorepo: ${{ inputs.monorepo }}

@@ -1,0 +1,40 @@
+name: 'Sync develop'
+description: 'Syncs main and develop after a release'
+
+inputs:
+  branch_name:
+    description: 'Branch that triggered the caller workflow (typically `main` or `release/*`).'
+    required: true
+  PAT_FORCE_PUSH:
+    description: 'GitHub token with write access to push to develop'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ inputs.PAT_FORCE_PUSH }}
+        fetch-depth: 0
+
+    - name: Configure git author
+      shell: bash
+      run: |
+        actor=$(echo "${GITHUB_ACTOR}" | sed 's/[^A-Za-z0-9._-]//g')
+        git config user.name  "$actor"
+        git config user.email "$actor@users.noreply.github.com"
+
+    - name: Squash‑merge main into develop
+      shell: bash
+      run: |
+        git fetch origin main
+        git checkout develop || git checkout -b develop
+        git merge --ff-only origin/main || echo "Already up to date"
+        git push origin develop
+
+    - name: Push develop
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.PAT_FORCE_PUSH }}
+      run: git push origin develop

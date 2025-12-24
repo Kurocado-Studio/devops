@@ -1,0 +1,93 @@
+name: Release
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+on:
+  workflow_call:
+    inputs:
+      branch_name:
+        required: true
+        type: string
+      monorepo:
+        default: false
+        required: false
+        type: boolean
+    secrets:
+      GH_TOKEN:
+        description: 'Automatically generated token that GitHub provides for every workflow run'
+        required: true
+      NPM_TOKEN:
+        description: 'Token used to publish the package on NPM registry'
+        required: true
+      PAT_FORCE_PUSH:
+        description: 'Token used to publish the package on NPM registry'
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: |
+      (
+        inputs.branch_name == 'main' ||
+        inputs.branch_name == 'alpha' ||
+        inputs.branch_name == 'beta' ||
+        inputs.branch_name == 'develop' ||
+        inputs.branch_name == 'pre'
+      )
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+          clean: true
+
+      - name: Install
+        uses: kurocado-studio/platform/.github/actions/install@main
+        with:
+          monorepo: ${{ inputs.monorepo }}
+          npm_token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Debug Monorepo Input
+        run: echo "Is monorepo true? ${{ format('{0}', inputs.monorepo) }}"
+
+      - name: Build (monorepo)
+        if: ${{ format('{0}', inputs.monorepo) == 'true' }}
+        shell: bash
+        run: |
+          pnpm exec turbo run build
+
+      - name: Build
+        if: ${{ format('{0}', inputs.monorepo) != 'true' }}
+        shell: bash
+        run: |
+          pnpm build
+
+      - name: Release (monorepo)
+        id: semantic_release
+        if: ${{ format('{0}', inputs.monorepo) == 'true' }}
+        shell: bash
+        run: pnpm semantic-release --ignore-private-packages
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Release
+        if: ${{ format('{0}', inputs.monorepo) != 'true' }}
+        shell: bash
+        run: npx semantic-release --ignore-private-packages
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  sync:
+    needs: release
+    uses: kurocado-studio/platform/.github/workflows/workflow.sync.yml@main
+    with:
+      branch_name: ${{ github.ref_name }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PAT_FORCE_PUSH: ${{ secrets.PAT_FORCE_PUSH }}

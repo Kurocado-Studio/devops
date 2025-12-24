@@ -1,0 +1,14 @@
+name: 'Lint Code'
+description: 'Runs Commitlint, ESLint, and Prettier to ensure code quality.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Commitlint
+      shell: bash
+      run: |
+        git log -1 --pretty=%B | pnpm exec commitlint
+
+    - name: Prettier
+      shell: bash
+      run: pnpm prettier --check .

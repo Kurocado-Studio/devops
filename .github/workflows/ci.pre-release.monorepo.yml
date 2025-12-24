@@ -1,0 +1,23 @@
+name: CI/CD Pre-Release Pipeline
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  push:
+    branches:
+      - alpha
+      - beta
+      - canary
+      - pre/rc
+
+jobs:
+  release:
+    uses: kurocado-studio/platform/.github/workflows/workflow.release.yml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    with:
+      branch_name: ${{ github.ref_name }}
+      monorepo: true

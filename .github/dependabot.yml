@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    commit-message:
+      prefix: 'pnpm'
+      include: 'scope'
+    labels:
+      - dependencies
+      - dependabot
+    ignore:
+      - dependency-name: '*'
+        versions: ['<1.0.0']

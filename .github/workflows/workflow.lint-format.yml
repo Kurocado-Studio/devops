@@ -1,0 +1,31 @@
+name: Lint Formatting
+
+on:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+        description: 'Automatically generated token that GitHub provides for every workflow run'
+        required: true
+      NPM_TOKEN:
+        description: 'Token used to publish the package on NPM registry'
+        required: false
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+          clean: true
+
+      - name: Install
+        uses: kurocado-studio/platform/.github/actions/install@main
+        with:
+          monorepo: ${{ inputs.monorepo }}
+          npm_token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Lint Format
+        uses: kurocado-studio/platform/.github/actions/lint-format@main

@@ -1,0 +1,22 @@
+name: 'Deploy'
+description: 'Deploys the application to Fly.io'
+
+inputs:
+  FLY_API_TOKEN:
+    description: 'Fly.io API token'
+    required: true
+  FLY_CONFIG:
+    description: 'Path to fly.toml for the service'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Flyctl
+      uses: superfly/flyctl-actions/setup-flyctl@master
+
+    - name: Deploy to Fly.io
+      shell: bash
+      run: flyctl deploy --remote-only --config ${{ inputs.FLY_CONFIG }}
+      env:
+        FLY_API_TOKEN: ${{ inputs.FLY_API_TOKEN }}

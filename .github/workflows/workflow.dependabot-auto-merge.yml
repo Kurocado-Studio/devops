@@ -1,0 +1,54 @@
+name: Dependabot Auto-Merge
+
+on:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+        description: 'Automatically generated token that GitHub provides for every workflow run'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot-auto-merge:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Get PR Info using head_sha
+        id: get_pr_info
+        run: |
+          PR_DATA=$(gh api repos/${{ github.repository }}/pulls --jq '.[] | select(.head.sha=="${{ github.event.workflow_run.head_sha }}")')
+
+          PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number')
+          PR_URL=$(echo "$PR_DATA" | jq -r '.html_url')
+          PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.user.login')
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No matching PR found. Exiting."
+            exit 1
+          fi
+
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+          echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Debug PR Author
+        run: echo "PR_AUTHOR is '${{ env.PR_AUTHOR }}'"
+
+      - name: Exit if PR was not created by Dependabot
+        if: ${{ env.PR_AUTHOR != 'dependabot[bot]' }}
+        run: |
+          echo "The PR was not created by Dependabot. Exiting gracefully."
+          exit 0  # Exit without error (exit code 0 means success)
+
+      - name: Attempt Squash Merge
+        if: ${{ success() && env.PR_AUTHOR == 'dependabot[bot]' }}
+        run: |
+          gh pr merge "$PR_URL" --squash --auto
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}

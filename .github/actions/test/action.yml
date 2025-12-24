@@ -1,0 +1,34 @@
+name: Vite Test
+description: Runs Vitest tests and build
+
+inputs:
+  monorepo:
+    default: 'false'
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Vitest (monorepo)
+      if: ${{ format('{0}', inputs.monorepo) == 'true' }}
+      shell: bash
+      run: |
+        pnpm exec turbo run test
+
+    - name: Vitest
+      if: ${{ format('{0}', inputs.monorepo) != 'true' }}
+      shell: bash
+      run: |
+        pnpm test
+
+    - name: Build (monorepo)
+      if: ${{ format('{0}', inputs.monorepo) == 'true' }}
+      shell: bash
+      run: |
+        pnpm exec turbo run build
+
+    - name: Build
+      if: ${{ format('{0}', inputs.monorepo) != 'true' }}
+      shell: bash
+      run: |
+        pnpm build

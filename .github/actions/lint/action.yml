@@ -1,0 +1,51 @@
+name: Lint Code
+description: Runs Commitlint, ESLint, TS check and Prettier to ensure code quality.
+
+inputs:
+  monorepo:
+    default: 'false'
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Commitlint
+      shell: bash
+      run: |
+        git log -1 --pretty=%B | pnpm exec commitlint
+
+    - name: ESLint (monorepo)
+      if: ${{ format('{0}', inputs.monorepo) == 'true' }}
+      shell: bash
+      run: |
+        pnpm exec turbo run lint
+
+    - name: ESLint
+      if: ${{ format('{0}', inputs.monorepo) != 'true' }}
+      shell: bash
+      run: |
+        pnpm eslint . --max-warnings=0
+
+    - name: TS check (monorepo)
+      if: ${{ format('{0}', inputs.monorepo) == 'true' }}
+      shell: bash
+      run: |
+        pnpm exec turbo run typecheck
+
+    - name: TS check
+      if: ${{ format('{0}', inputs.monorepo) != 'true' }}
+      shell: bash
+      run: |
+        tsc --noEmit --pretty
+
+    - name: Prettier (monorepo)
+      if: ${{ format('{0}', inputs.monorepo) == 'true' }}
+      shell: bash
+      run: |
+        pnpm exec turbo run prettier:check
+
+    - name: Prettier
+      if: ${{ format('{0}', inputs.monorepo) != 'true' }}
+      shell: bash
+      run: |
+        pnpm prettier --check .

@@ -1,0 +1,66 @@
+name: Deploy to Fly.io
+
+on:
+  workflow_call:
+    inputs:
+      branch_name:
+        required: true
+        type: string
+      prod_env:
+        required: true
+        type: string
+      dev_env:
+        required: true
+        type: string
+    secrets:
+      GH_TOKEN:
+        description: 'Automatically generated token that GitHub provides for every workflow run'
+        required: true
+      FLY_API_TOKEN:
+        description: 'Token needed to deploy the application to Fly.io'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: |
+      inputs.branch_name == 'main' || 
+      inputs.branch_name == 'develop'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+          clean: true
+
+      - name: Get last commit message
+        id: get_commit
+        run: |
+          {
+            echo "message<<EOF"
+            git log -1 --pretty=%s
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Select config
+        id: envselect
+        run: |
+          if [[ "${{ inputs.branch_name }}" == "main" ]]; then
+            echo "fly_config=${{ inputs.prod_env }}" >> $GITHUB_OUTPUT
+          else
+            echo "fly_config=${{ inputs.dev_env }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy
+        if: |
+          (
+            startsWith(steps.get_commit.outputs.message, 'feat') ||
+            startsWith(steps.get_commit.outputs.message, 'fix') ||
+            startsWith(steps.get_commit.outputs.message, 'release')
+          ) &&
+          !contains(steps.get_commit.outputs.message, '[skip')
+        uses: kurocado-studio/platform/.github/actions/deploy@main
+        with:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_CONFIG: ${{ steps.envselect.outputs.fly_config }}

@@ -1,0 +1,47 @@
+name: 'Install'
+description: 'Sets up Node, and installs dependencies'
+inputs:
+  monorepo:
+    default: 'false'
+    required: false
+  npm_token:
+    description: 'NPM token for private packages'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Set NPM token
+      shell: bash
+      run: |
+        if [ -n "$NPM_TOKEN" ]; then
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+          echo "NPM token configured"
+        else
+          echo "No NPM token provided - skipping private package authentication"
+        fi
+      env:
+        NPM_TOKEN: ${{ inputs.npm_token }}
+
+    - name: Install pnpm
+      shell: bash
+      run: |
+        npm install -g pnpm
+
+    - name: Install dependencies (monorepo)
+      if: ${{ format('{0}', inputs.monorepo) == 'true' }}
+      shell: bash
+      run: |
+        pnpm install
+        pnpm exec turbo run setup
+
+    - name: Install dependencies
+      if: ${{ format('{0}', inputs.monorepo) != 'true' }}
+      shell: bash
+      run: |
+        pnpm install --frozen-lockfile --prod=false

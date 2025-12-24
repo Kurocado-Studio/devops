@@ -1,0 +1,21 @@
+name: CI/CD Dependabot Auto-Merge Pipeline
+
+on:
+  workflow_run:
+    workflows: ['CI/CD Pull Request Pipeline']
+    types:
+      - completed
+    secrets:
+      GH_TOKEN:
+        description: 'Automatically generated token that GitHub provides for every workflow run'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot-auto-merge:
+    uses: kurocado-studio/platform/.github/workflows/workflow.dependabot-auto-merge.yml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
