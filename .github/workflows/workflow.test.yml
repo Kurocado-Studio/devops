@@ -27,12 +27,12 @@ jobs:
           clean: true
 
       - name: Install Dependencies
-        uses: kurocado-studio/platform/.github/actions/install@main
+        uses: kurocado-studio/devops/.github/actions/install@main
         with:
           monorepo: ${{ inputs.monorepo }}
           npm_token: ${{ secrets.NPM_TOKEN }}
 
       - name: Test
-        uses: kurocado-studio/platform/.github/actions/test@main
+        uses: kurocado-studio/devops/.github/actions/test@main
         with:
           monorepo: ${{ inputs.monorepo }}

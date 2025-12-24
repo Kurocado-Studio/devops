@@ -9,6 +9,6 @@ on:
 
 jobs:
   lint:
-    uses: .github/workflows/workflow.lint-format.yml
+    uses: kurocado-studio/devops/.github/workflows/workflow.lint-format.yml
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -75,7 +75,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Dependencies
-        uses: kurocado-studio/platform/.github/actions/install@main
+        uses: kurocado-studio/devops/.github/actions/install@main
         with:
           npm_token: ${{ secrets.NPM_TOKEN }}
 

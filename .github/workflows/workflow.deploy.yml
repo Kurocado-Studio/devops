@@ -60,7 +60,7 @@ jobs:
             startsWith(steps.get_commit.outputs.message, 'release')
           ) &&
           !contains(steps.get_commit.outputs.message, '[skip')
-        uses: kurocado-studio/platform/.github/actions/deploy@main
+        uses: kurocado-studio/devops/.github/actions/deploy@main
         with:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           FLY_CONFIG: ${{ steps.envselect.outputs.fly_config }}

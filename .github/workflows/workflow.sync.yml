@@ -29,7 +29,7 @@ jobs:
           clean: true
 
       - name: Sync branches
-        uses: kurocado-studio/platform/.github/actions/sync@main
+        uses: kurocado-studio/devops/.github/actions/sync@main
         with:
           branch_name: ${{ inputs.branch_name }}
           PAT_FORCE_PUSH: ${{ secrets.PAT_FORCE_PUSH }}

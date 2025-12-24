@@ -22,10 +22,10 @@ jobs:
           clean: true
 
       - name: Install
-        uses: kurocado-studio/platform/.github/actions/install@main
+        uses: kurocado-studio/devops/.github/actions/install@main
         with:
           monorepo: ${{ inputs.monorepo }}
           npm_token: ${{ secrets.NPM_TOKEN }}
 
       - name: Lint Format
-        uses: kurocado-studio/platform/.github/actions/lint-format@main
+        uses: kurocado-studio/devops/.github/actions/lint-format@main

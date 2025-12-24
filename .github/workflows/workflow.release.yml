@@ -46,7 +46,7 @@ jobs:
           clean: true
 
       - name: Install
-        uses: kurocado-studio/platform/.github/actions/install@main
+        uses: kurocado-studio/devops/.github/actions/install@main
         with:
           monorepo: ${{ inputs.monorepo }}
           npm_token: ${{ secrets.NPM_TOKEN }}
@@ -85,7 +85,7 @@ jobs:
 
   sync:
     needs: release
-    uses: kurocado-studio/platform/.github/workflows/workflow.sync.yml@main
+    uses: kurocado-studio/devops/.github/workflows/workflow.sync.yml@main
     with:
       branch_name: ${{ github.ref_name }}
     secrets:
