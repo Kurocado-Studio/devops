@@ -1,0 +1,28 @@
+{
+  "name": "@kurocado-studio/devops",
+  "version": "0.0.0-semantically-released",
+  "type": "module",
+  "packageManager": "pnpm@9.12.2",
+  "scripts": {
+    "commitlint": "pnpm exec commitlint --edit .git/COMMIT_EDITMSG",
+    "format": "prettier --write .",
+    "prepare": "husky install",
+    "prettier:check": "prettier --check . --ignore-path .prettierignore",
+    "prettier:fix": "prettier --check --write . --ignore-path .prettierignore"
+  },
+  "devDependencies": {
+    "@kurocado-studio/styleguide": "2.6.0-develop.10",
+    "commitlint": "^19.8.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6",
+    "prettier": "3.6.2"
+  },
+  "lint-staged": {
+    "*": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

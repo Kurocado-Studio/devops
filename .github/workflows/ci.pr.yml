@@ -1,0 +1,14 @@
+name: CI/CD Pull Request Pipeline
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    uses: .github/workflows/workflow.lint-format.yml
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

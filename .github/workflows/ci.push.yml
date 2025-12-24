@@ -1,0 +1,20 @@
+name: CI/CD Main Pipeline
+
+permissions:
+  contents: write
+  id-token: write
+  pages: write
+  issues: write
+  pull-requests: write
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  lint:
+    uses: .github/workflows/workflow.lint-format.yml
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
